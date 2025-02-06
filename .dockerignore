@@ -1,0 +1,35 @@
+# Ignore Python environment
+**/venv
+**/.venv
+**/env
+**/.env
+
+# Ignore node_modules (if you have a frontend)
+**/node_modules
+
+# Ignore Python cache files
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+
+# Ignore Dockerfiles and build files
+**/Dockerfile
+**/docker-compose.yml
+
+# Ignore logs
+**/*.log
+
+# Ignore build artifacts
+**/build
+**/dist
+**/.build
+**/.dist
+
+# Ignore temporary files
+**/*.swp
+**/*.swo
+**/*.bak
+
+# Ignore specific files you don't want copied into the container
+**/secret_keys.py

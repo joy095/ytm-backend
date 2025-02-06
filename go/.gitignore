@@ -1,0 +1,6 @@
+/tmp
+.env
+/vendor
+
+logs
+temp
