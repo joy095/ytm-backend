@@ -11,7 +11,6 @@ services:
     envVars:
       - key: ENV
         value: production
-    ports: 8000
 
   - name: gin-service
     type: web
@@ -23,4 +22,3 @@ services:
     envVars:
       - key: ENV
         value: production
-    ports: 8080
