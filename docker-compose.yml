@@ -6,6 +6,7 @@ services:
   fastapi-service:
     build:
       context: ./python
+    image: joy456/fastapi-service:latest
     container_name: fastapi-service
     ports:
       - "8000:8000"
@@ -20,6 +21,7 @@ services:
   gin-service:
     build:
       context: ./go
+    image: joy456/gin-service:latest
     container_name: gin-service
     ports:
       - "8080:8080"
