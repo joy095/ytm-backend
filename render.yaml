@@ -4,37 +4,19 @@ services:
     env: docker
     dockerfilePath: ./python/Dockerfile
     plan: free
-    healthCheckPath: /health # More specific health check endpoint
+    healthCheckPath: /health
     autoDeploy: true
     envVars:
       - key: ENV
         value: production
-    scaling:
-      minInstances: 1
-      maxInstances: 1
-    headers:
-      - path: /*
-        name: X-Frame-Options
-        value: DENY
-    buildCommand: docker build -t fastapi-service ./python
-    startCommand: docker run fastapi-service
 
   - name: gin-service
     type: web
     env: docker
     dockerfilePath: ./go/Dockerfile
     plan: free
-    healthCheckPath: /health # More specific health check endpoint
+    healthCheckPath: /health
     autoDeploy: true
     envVars:
       - key: ENV
         value: production
-    scaling:
-      minInstances: 1
-      maxInstances: 1
-    headers:
-      - path: /*
-        name: X-Frame-Options
-        value: DENY
-    buildCommand: docker build -t gin-service ./go
-    startCommand: docker run gin-servicea
