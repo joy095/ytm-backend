@@ -1,26 +1,16 @@
-# Build stage
-FROM golang:1.22-alpine as builder
+FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
 
-# Cache dependencies layer
+# Copy go.mod and go.sum to cache dependencies
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Build with optimizations for size
+# Copy the rest of the code
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build \
-    -ldflags='-w -s' \
-    -o gin-service \
-    ./cmd/main.go
 
-# Runtime stage
-FROM alpine:latest
-WORKDIR /app
+# Build the Go application
+RUN go build -o main ./cmd/main.go
 
-# Copy only the compiled binary
-COPY --from=builder /app/gin-service .
-
-EXPOSE 8080
-
-ENTRYPOINT ["./gin-service"]
+# Run the application
+CMD ["./main"]
