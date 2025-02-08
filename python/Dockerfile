@@ -1,13 +1,13 @@
 FROM python:3.10-slim
 
-WORKDIR /app
+WORKDIR /app/python
 
 # Install dependencies
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Copy the FastAPI app
-COPY /app .
+COPY /python/app .
 
 # Expose the FastAPI port
 EXPOSE 8000
