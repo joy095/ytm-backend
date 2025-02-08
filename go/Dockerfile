@@ -1,23 +1,26 @@
-FROM golang:1.22-alpine AS go-builder
+# Build stage
+FROM golang:1.22-alpine as builder
 
 WORKDIR /app
 
-# Copy go.mod and go.sum (relative to the Docker build context)
-COPY ./go.mod ./go.sum ./
-
-# Download dependencies
+# Cache dependencies layer
+COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the rest of the Go project
-COPY ./ ./
+# Build with optimizations for size
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -ldflags='-w -s' \
+    -o gin-service \
+    ./cmd/main.go
 
-# Build the Gin service from cmd/main.go
-RUN go build -o gin-service ./cmd/main.go
-
-# Use a minimal final image
+# Runtime stage
 FROM alpine:latest
-WORKDIR /root/
-COPY --from=go-builder /app/gin-service .
+WORKDIR /app
+
+# Copy only the compiled binary
+COPY --from=builder /app/gin-service .
 
 EXPOSE 8080
+
 ENTRYPOINT ["./gin-service"]
