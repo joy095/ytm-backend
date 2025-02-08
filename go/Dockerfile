@@ -10,7 +10,7 @@ RUN go mod download
 COPY /go .
 
 # Build the Go application
-RUN go build -o main ./cmd/main.go
+RUN go build -o main ./go/cmd/main.go
 
 # Run the application
 CMD ["./main"]
