@@ -1,0 +1,28 @@
+# @format
+
+services:
+  - name: fastapi-service
+    type: web
+    env: docker
+    dockerfilePath: ./python/Dockerfile
+    plan: free
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: ENV
+        value: production
+    ports:
+      - 8000
+
+  - name: gin-service
+    type: web
+    env: docker
+    dockerfilePath: ./go/Dockerfile
+    plan: free
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: ENV
+        value: production
+    ports:
+      - 8080
