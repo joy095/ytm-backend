@@ -1,14 +1,16 @@
-FROM python:3.11-slim AS builder
+FROM python:3.10-slim
 
 WORKDIR /app
 
-# Copy and install dependencies
+# Install dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Copy the application code
-COPY ./app ./app
+# Copy the FastAPI app
+COPY ./app .
 
-# Set the working directory to the app folder and start FastAPI
-WORKDIR /app
-CMD ["python", "app/main.py"]
+# Expose the FastAPI port
+EXPOSE 8000
+
+# Run the FastAPI app using uvicorn
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
