@@ -1,20 +1,19 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 from nudenet import NudeDetector
-import shutil
+import cv2
 import os
+import shutil
 from PIL import Image
 
 app = FastAPI()
 
-# Define the model path
+# Initialize NudeDetector with the specified model path
 model_path = os.path.join(os.path.dirname(__file__), "ai_models/640m.onnx")
-
-# Check if the model file exists, and initialize the detector if it does
 if not os.path.exists(model_path):
     raise FileNotFoundError(f"Model file not found at {model_path}")
-else:
-    detector = NudeDetector(model_path=model_path, inference_resolution=640)
+
+detector = NudeDetector(model_path=model_path, inference_resolution=640)
 
 # List of adult content labels to check for
 adult_content_labels = [
@@ -26,64 +25,122 @@ adult_content_labels = [
 async def main():
     return """
     <html>
-        <head>
-            <title>Upload Image</title>
-        </head>
+        <head><title>Upload File</title></head>
         <body>
-            <h2>Upload an image to check for nudity:</h2>
-            <form action="/detect-nudity/" enctype="multipart/form-data" method="post">
-                <input name="file" type="file" accept="image/*" required>
+            <h2>Upload an image or video to check for adult content:</h2>
+            <form action="/detect-content/" enctype="multipart/form-data" method="post">
+                <label for="file">Select an image or video:</label>
+                <input name="file" type="file" accept="image/*,video/*" required>
+                <br><br>
                 <input type="submit" value="Upload">
             </form>
         </body>
     </html>
     """
 
-@app.post("/detect-nudity/")
-async def detect_nudity(file: UploadFile = File(...)):
+@app.post("/detect-content/")
+async def detect_content(file: UploadFile = File(...)):
     temp_file_path = f"temp_{file.filename}"
     try:
-        # Validate the file type
-        if not file.content_type.startswith("image/"):
-            return JSONResponse(content={"error": "Uploaded file is not an image."}, status_code=400)
-
-        # Save the uploaded file temporarily
-        with open(temp_file_path, "wb") as temp_file:
-            shutil.copyfileobj(file.file, temp_file)
-
-        # Verify the image file
-        try:
-            Image.open(temp_file_path).verify()
-        except Exception:
-            os.remove(temp_file_path)
-            return JSONResponse(content={"error": "Uploaded file is not a valid image."}, status_code=400)
-
-        # Classify the image using the full-size NudeNet detector
-        result = detector.detect(temp_file_path)
-
-        # Print the result to debug and inspect its structure
-        print(result)
-
-        # Check for adult content labels in the result
-        if isinstance(result, list):  # Check if the result is a list of classifications
-            for item in result:
-                # Ensure the class and score exist in the item
-                if "class" in item and "score" in item:
-                    # Check if the class is in the adult_content_labels and the score is above threshold
-                    if item["class"] in adult_content_labels and item["score"] > 0.5:
-                        os.remove(temp_file_path)
-                        return JSONResponse(content={"error": "Adult content detected in the image."}, status_code=400)
-
-        # Clean up the temporary file
-        os.remove(temp_file_path)
-
-        return {
-            "filename": file.filename,
-            "full_classification": result
-        }
+        # Determine file type and call the appropriate detection function
+        if file.content_type.startswith("image/"):
+            return await detect_nudity_in_image(file, temp_file_path)
+        elif file.content_type in ["video/mp4", "video/x-matroska"]:
+            return await detect_nudity_in_video(file, temp_file_path)
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported file type. Please upload an image or video.")
 
     except Exception as e:
-        # Handle any unexpected errors
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
-        return JSONResponse(content={"error": f"An unexpected error occurred: {str(e)}"}, status_code=500)
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+
+async def detect_nudity_in_image(file: UploadFile, temp_file_path: str):
+    # Save the uploaded image temporarily
+    with open(temp_file_path, "wb") as temp_file:
+        shutil.copyfileobj(file.file, temp_file)
+
+    # Verify the image file
+    try:
+        Image.open(temp_file_path).verify()
+    except Exception:
+        os.remove(temp_file_path)
+        raise HTTPException(status_code=400, detail="Uploaded file is not a valid image.")
+
+    # Detect nudity in the image
+    result = detector.detect(temp_file_path)
+    print(f"Image result: {result}")  # Debugging output
+
+    # Check for adult content in the result
+    for item in result:
+        if item.get("class") in adult_content_labels and item.get("score", 0) > 0.5:
+            os.remove(temp_file_path)
+            return JSONResponse(
+                content={
+                    "status": True,
+                    "message": "Warning: Adult content detected in the image."
+                },
+                status_code=200
+            )
+
+    os.remove(temp_file_path)
+    return JSONResponse(
+        content={
+            "status": False,
+            "message": "No adult content detected in the image."
+        },
+        status_code=200
+    )
+
+async def detect_nudity_in_video(file: UploadFile, temp_file_path: str):
+    # Save the uploaded video temporarily
+    with open(temp_file_path, "wb") as temp_file:
+        shutil.copyfileobj(file.file, temp_file)
+
+    # Open the video using OpenCV
+    video = cv2.VideoCapture(temp_file_path)
+    frame_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+    frame_rate = int(video.get(cv2.CAP_PROP_FPS))
+    frame_step = max(1, frame_rate // 2)  # Analyze every half second
+
+    print(f"Total frames: {frame_count}, Frame rate: {frame_rate}, Step: {frame_step}")
+
+    for frame_number in range(0, frame_count, frame_step):
+        video.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
+        success, frame = video.read()
+        if not success:
+            break
+
+        # Save the current frame as a temporary image
+        frame_path = f"frame_{frame_number}.jpg"
+        cv2.imwrite(frame_path, frame)
+
+        # Detect nudity in the current frame
+        result = detector.detect(frame_path)
+        print(f"Frame {frame_number} result: {result}")  # Debugging output
+
+        # Check for adult content in the detection result
+        for item in result:
+            if item.get("class") in adult_content_labels and item.get("score", 0) > 0.5:
+                video.release()
+                os.remove(frame_path)
+                os.remove(temp_file_path)
+                return JSONResponse(
+                    content={
+                        "status": True,
+                        "message": f"Warning: Adult content detected at frame {frame_number}."
+                    },
+                    status_code=200
+                )
+
+        os.remove(frame_path)
+
+    video.release()
+    os.remove(temp_file_path)
+    return JSONResponse(
+        content={
+            "status": False,
+            "message": "No adult content detected in the video."
+        },
+        status_code=200
+    )
