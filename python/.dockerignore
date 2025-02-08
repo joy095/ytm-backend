@@ -1,0 +1,37 @@
+# Python virtual environment
+venv/
+env/
+.env/
+.venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Development and IDE files
+.git
+.gitignore
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Test coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Build and distribution
+*.egg-info/
+dist/
+build/
+
+# Documentation
+docs/
+*.md
+
+# Local development
+.env
+.env.local

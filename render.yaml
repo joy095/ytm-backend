@@ -6,9 +6,6 @@ services:
     plan: free
     healthCheckPath: /health
     autoDeploy: true
-    envVars:
-      - key: ENV
-        value: production
 
   - name: gin-service
     type: web
@@ -17,6 +14,10 @@ services:
     plan: free
     healthCheckPath: /health
     autoDeploy: true
-    envVars:
-      - key: ENV
-        value: production
+
+  - name: nginx-service
+    type: web
+    env: docker
+    dockerfilePath: ./nginx/Dockerfile
+    plan: free
+    autoDeploy: true

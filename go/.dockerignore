@@ -3,5 +3,17 @@ tmp/
 logs/
 temp/
 
+.air.toml
+
 *.log
 *.bak
+
+
+
+# Development and IDE files
+.git
+.gitignore
+.idea/
+.vscode/
+*.swp
+*.swo
