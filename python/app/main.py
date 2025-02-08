@@ -21,6 +21,10 @@ adult_content_labels = [
     "ANUS_EXPOSED", "MALE_GENITALIA_EXPOSED"
 ]
 
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
+
 @app.get("/", response_class=HTMLResponse)
 async def main():
     return """
