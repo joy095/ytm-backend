@@ -1,18 +1,31 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"backend/routes"
+	"log"
+
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+)
+
+func init() {
+	godotenv.Load(".env")
+	err := godotenv.Load(".env")
+
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
+}
 
 func main() {
-	r := gin.Default()
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
-	r.GET("/health", func(c *gin.Context) {
+	router := gin.Default()
+
+	routes.RegisterRoutes(router)
+
+	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status": "healthy",
 		})
 	})
-	r.Run() // listen and serve on 0.0.0.0:8080
+	router.Run(":8080") // listen and serve on 0.0.0.0:8080
 }
