@@ -2,7 +2,6 @@ package main
 
 import (
 	"backend/routes"
-	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -10,11 +9,6 @@ import (
 
 func init() {
 	godotenv.Load(".env")
-	err := godotenv.Load(".env")
-
-	if err != nil {
-		log.Fatalf("Error loading .env file")
-	}
 }
 
 func main() {
