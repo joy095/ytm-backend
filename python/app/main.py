@@ -8,12 +8,8 @@ from PIL import Image
 
 app = FastAPI()
 
-# Initialize NudeDetector with the specified model path
-model_path = os.path.join(os.path.dirname(__file__), "ai_models/640m.onnx")
-if not os.path.exists(model_path):
-    raise FileNotFoundError(f"Model file not found at {model_path}")
-
-detector = NudeDetector(model_path=model_path, inference_resolution=640)
+# Initialize the Nude Detector Default Model 320n.onnx
+detector = NudeDetector()
 
 # List of adult content labels to check for
 adult_content_labels = [
